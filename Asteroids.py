@@ -186,8 +186,13 @@ class Sprite:
         return self.pos
     
     def draw(self, canvas):
-        canvas.draw_image(self.image, self.image_center, self.image_size, self.pos, self.image_size, self.angle )
-    
+        if self.animated:
+            canvas.draw_image(self.image,
+                              [self.image_center[0] + 2 * self.age * self.image_center[0], self.image_center[1]],
+                          self.image_size, self.pos, self.image_size, self.angle)
+        else:
+            canvas.draw_image(self.image, self.image_center, self.image_size,
+                          self.pos, self.image_size, self.angle)
     def update(self):
         self.angle+= self.angle_vel
         self.pos[0] += self.vel[0]        
@@ -207,7 +212,10 @@ class Sprite:
             if type(object) == Ship:
                 lives -= 1
                 if lives <= 0:
+                    ship_thrust_sound.pause()
+                    soundtrack.pause()
                     started = False
+                    
             return True
         else:
             return False
@@ -225,6 +233,8 @@ def click(pos):
         my_ship = Ship([WIDTH / 2, HEIGHT / 2], [0, 0], 0, ship_image, ship_info)
         rock_group = set([])
         missile_group = set([])
+        explosion_group = set([])
+        soundtrack.play()
         started = True
         
         
@@ -275,16 +285,22 @@ def rock_spawner():
         rock_pos = [random.randrange(0, WIDTH), random.randrange(0, HEIGHT)]
         rock_vel = [random.randrange(-1, 1), random.randrange(-1, 1)]
         a_rock = Sprite(rock_pos, rock_vel, 0, ang_vel, asteroid_image, asteroid_info)
-        if len(rock_group)<13:
+        if len(rock_group) < 13 and dist(my_ship.get_position(), a_rock.get_position()) > 150 :
             rock_group.add(a_rock)
         
 #function to draw and update rock group
 def process_sprite_group(canvas):
+    
+    global missile_group, explosion_group
+    
+    for x in explosion_group:
+        x.draw(canvas)
+        x.update()
+         
     for x in rock_group:
         x.draw(canvas)
         x.update()
     
-    global missile_group
     for x in missile_group:
         x.draw(canvas)
         if x.update():
@@ -302,10 +318,15 @@ def group_collide(sprite_group, obj):
     for x in sprite_group:
         if x.collide(obj):
             flag = 1
+            explosion_pos = x.pos
+            explosion_group.add(Sprite(explosion_pos, [0,0], 0, 0, explosion_image, explosion_info))
+            explosion_sound.rewind()
+            explosion_sound.play() 
             remove_set.add(x)
+           
     rock_group = set(rock_group.difference(remove_set))
     if flag == 1:
-        return True
+        return True #flag is to be used in group-group collide function and updating score
     
 #function  to detect collisions b/w two group
 def group_group_collide():
@@ -327,7 +348,7 @@ frame = simplegui.create_frame("Asteroids", WIDTH, HEIGHT)
 my_ship = Ship([WIDTH / 2, HEIGHT / 2], [0, 0], 0, ship_image, ship_info)
 rock_group = set([])
 missile_group = set([])
-
+explosion_group = set([])
 #########################
 #key handlers
 def keydown(key):

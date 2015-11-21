@@ -1,6 +1,6 @@
 # Asteroids-game
 Asteroids game made in python
-
+<img src="https://cloud.githubusercontent.com/assets/8466448/11316696/7cd8fe98-9037-11e5-962e-324c39a6bd6f.png" width="90%"></img> 
 <h3>This game was made as the final project for Rice University's "Interactive programming in python" course in coursera.</h3>
 <h4>Game controls</h4>
 <ul>
